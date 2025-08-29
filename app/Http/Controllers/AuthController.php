@@ -28,10 +28,27 @@ class AuthController extends Controller
                         'user' => $user
                     ]
             ], 200);
-        } catch (Exception $th) {
+        } catch (Exception $e) {
             return response()->json([
                 'message' => 'Terjadi kesalahan',
-                'data' => $th->getMessage()
+                'data' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function logout() {
+        try {
+            $user = Auth::user();
+            $user->currentAccessToken()->delete();
+
+            return response()->json([
+                'message' => 'Logout berhasil',
+                'data' => null
+            ], 200);
+        } catch (Exception $e) {
+            return response()->json([
+                'message' => 'Terjadi kesalahan',
+                'data' => $e->getMessage()
             ], 500);
         }
     }
