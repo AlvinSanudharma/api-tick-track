@@ -102,6 +102,8 @@ class AuthController extends Controller
                     ]
                 ],201);
         } catch (Exception $e) {
+            DB::rollback();
+
              return response()->json([
                 'message' => 'Terjadi kesalahan',
                 'data' => $e->getMessage()
