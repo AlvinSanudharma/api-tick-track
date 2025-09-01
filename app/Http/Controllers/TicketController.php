@@ -2,9 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\TicketReplyStoreRequest;
 use App\Http\Requests\TicketStoreRequest;
 use App\Http\Resources\TicketResource;
+use App\Http\Resources\TiketReplyResource;
 use App\Models\Ticket;
+use App\Models\TicketReply;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -78,7 +81,7 @@ class TicketController extends Controller
         }
     }
 
-    public function store(TicketStoreRequest $request)
+    public function store(TicketReplyStoreRequest $request)
     {
         $data = $request->validated();
 
@@ -103,6 +106,59 @@ class TicketController extends Controller
             ], 201);
         } catch (Exception $e) {
              DB::rollback();
+
+             return response()->json([
+                'message' => 'Terjadi kesalahan',
+                'data' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function storeReply(TicketReplyStoreRequest $request, $code)
+    {
+        $data = $request->validated();
+
+        DB::beginTransaction();
+
+        try {
+            $ticket = Ticket::where('code', $code)->first();
+
+            if (!$ticket) {
+                return response()->json([
+                    'message' => 'Tiket tidak ditemukan'
+                ], 404);
+            }
+
+            if (auth()->user()->role == 'user' &&  $ticket->user_id != auth()->user()->id) {
+                return response()->json([
+                    'message' => 'Anda tidak diperbolehkan membalas tiket ini'
+                ], 403);
+            }
+
+            $ticketReply = new TicketReply();
+            $ticketReply->ticket_id = $ticket->id;
+            $ticketReply->user_id = auth()->user()->id;
+            $ticketReply->content = $data['content'];
+            $ticketReply->save();
+
+            if (auth()->user()->role == 'admin') {
+                $ticket->status = $data['status'];
+
+                if ($data['status'] == 'resolved') {
+                    $ticket->completed_at = now();
+                }
+
+                $ticket->save();
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'message' => 'Balasan berhasil ditambahkan',
+                'data' => new TiketReplyResource($ticketReply)
+            ], 201);
+        } catch (Exception $e) {
+            DB::rollback();
 
              return response()->json([
                 'message' => 'Terjadi kesalahan',

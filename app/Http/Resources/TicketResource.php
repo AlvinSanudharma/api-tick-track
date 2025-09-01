@@ -25,7 +25,7 @@ class TicketResource extends JsonResource
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
             'completed_at' => $this->completed_at,
-            'ticket_replies' => TicketResource::collection($this->ticketReplies)
+            'ticket_replies' =>  TiketReplyResource::collection($this->ticketReplies)
         ];
     }
 }
