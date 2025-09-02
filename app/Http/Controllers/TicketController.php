@@ -81,7 +81,7 @@ class TicketController extends Controller
         }
     }
 
-    public function store(TicketReplyStoreRequest $request)
+    public function store(TicketStoreRequest $request)
     {
         $data = $request->validated();
 
