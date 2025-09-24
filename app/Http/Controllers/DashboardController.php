@@ -26,8 +26,22 @@ class DashboardController extends Controller
         $avgResolutionTime = Ticket::whereBetween('created_at', [$currentMonth, $endOfMonth])
                                     ->where('status', 'resolved')
                                     ->whereNotNull('completed_at')
-                                    ->select(DB::raw('AVG(TIMESTAMPDIFF(HOUR, created_at, completed_at)) as avg_time'))
+                                    ->select(DB::raw('AVG(TIMESTAMPDIFF(MINUTE, created_at, completed_at)) as avg_time'))
                                     ->value('avg_time') ?? 0;
+
+        $totalMinutes = (int) $avgResolutionTime;
+
+        $days = floor($totalMinutes / 1440); 
+        $hours = floor(($totalMinutes % 1440) / 60);
+        $minutes = $totalMinutes % 60;
+
+        if ($days > 0) {
+            $formattedAvgResolutionTime = "{$days} hari {$hours} jam {$minutes} menit";
+        } elseif ($hours > 0) {
+            $formattedAvgResolutionTime = "{$hours} jam {$minutes} menit";
+        } else {
+            $formattedAvgResolutionTime = "{$minutes} menit";
+        }
         
         $statusDistribution = [
             'open' => Ticket::whereBetween('created_at', [$currentMonth, $endOfMonth])->where('status', 'open')->count(),
@@ -40,7 +54,7 @@ class DashboardController extends Controller
             'total_tickets' => $totalTickets,
             'active_tickets' => $activeTickets,
             'resolved_tickets' => $resolvedTickets,
-            'avg_resolution_time' => round($avgResolutionTime, 1),
+            'avg_resolution_time' => $formattedAvgResolutionTime,
             'status_distribution' => $statusDistribution
         ];
 
